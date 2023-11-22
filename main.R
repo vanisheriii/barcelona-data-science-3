@@ -4,12 +4,18 @@ install.packages("tidyverse")
 install.packages("stringr")
 install.packages("dplyr")
 install.packages("lubridate")
+if (!requireNamespace("writexl", quietly = TRUE)) {
+  install.packages("writexl")
+}
+
 
 #Leer el archivo epa http.cvs
 library(readr)
 library(dplyr)
 library(stringr)
 library(lubridate)
+library(writexl)
+
 
 ####################### PREGUNTA 1 INICIO #######################
 
@@ -68,6 +74,8 @@ epa_http <- epa_http %>%
     )
   )
 p2_df <- epa_http %>% group_by(metodoHttp,is_image) %>% summarise(peticiones  = n()) 
+
+write_xlsx(epa_http, "epa_http_data.xlsx")
 
 
 ####################### PREGUNTA 3 FIN #######################
