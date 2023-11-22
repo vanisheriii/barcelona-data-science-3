@@ -63,10 +63,12 @@ View(p1_df)
 epa_http <- epa_http %>%
   mutate(
     is_image = case_when(
-      stringr::str_detect(uri, "$\.[jpg|jpeg|png|svg|gif|tiff|psd|bmp|eps]") ~ TRUE,
+      stringr::str_detect(uri, "(?i)\\.(jpg|jpeg|png|xbm|svg|gif|tiff|psd|bmp|eps)$") ~ TRUE,
       TRUE ~ FALSE
     )
   )
+p2_df <- epa_http %>% group_by(metodoHttp,is_image) %>% summarise(peticiones  = n()) 
+
 
 ####################### PREGUNTA 3 FIN #######################
 
