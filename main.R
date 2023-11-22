@@ -11,6 +11,7 @@ library(dplyr)
 library(stringr)
 library(lubridate)
 
+####################### PREGUNTA 1 INICIO #######################
 
 epa_http <- read_table("epa-http.csv", col_names = FALSE)
 #cambiar nombre de los columnas
@@ -30,7 +31,6 @@ epa_http$bytes <-  epa_http$bytes <- ifelse(is.na(epa_http$bytes), 0, epa_http$b
 epa_http$origen <- str_trim(epa_http$origen)
 View(epa_http)
 
-
 # Validar si la columna es de tipo Date
 if (all(is.Date(epa_http$dataTimeStamp))) {
   print("La columna dataTimeStamp es de tipo Date.")
@@ -39,6 +39,7 @@ if (all(is.Date(epa_http$dataTimeStamp))) {
   print(class(epa_http$dataTimeStamp))
 }
 
+####################### PREGUNTA 1 FIN #######################
 
 #Primera pregunta  Valor medio de la columna Bytes
 mean(epa_http$bytes)
