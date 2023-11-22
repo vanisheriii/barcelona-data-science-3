@@ -7,6 +7,7 @@ install.packages("dplyr")
 #Leer el archivo epa http.cvs
 library(readr)
 library(dplyr)
+library(stringr)
 
 
 epa_http <- read_table("epa-http.csv", col_names = FALSE)
@@ -18,22 +19,16 @@ colnames(epa_http)[4]<-"uri"
 colnames(epa_http)[5]<-"protocolo"
 colnames(epa_http)[6]<-"respuestaHttp"
 colnames(epa_http)[7]<-"bytes"
+#Normalizar información de columnas:
+epa_http$metodoHttp <- gsub('^"|"$', '', epa_http$metodoHttp)
+epa_http$protocolo <- gsub('^"|"$', '', epa_http$protocolo)
+epa_http$dataTimeStamp <- as.POSIXct(epa_http$dataTimeStamp,format="[%d:%H:%M:%S]",tz = "utc")  
+epa_http$bytes <-  as.numeric(epa_http$bytes)
+epa_http$bytes <-  epa_http$bytes <- ifelse(is.na(epa_http$bytes), 0, epa_http$bytes)
+epa_http$origen <- str_trim(epa_http$origen)
 View(epa_http)
 
 
-## Listar la segunda columna en formato de fecha
-
-#Columna 2 convertir a formato fecha
-epa_http$dataTimeStamp <- as.POSIXct(epa_http$dataTimeStamp,format="[%d:%H:%M:%S]",tz = "utc")  
-
-#Define 0 si es NA
-epa_http$bytes <-  epa_http$bytes <- ifelse(is.na(epa_http$bytes), 0, epa_http$bytes)
-#Convierte los valores a numerico
-epa_http$bytes <-  as.numeric(epa_http$bytes)
-
-
-#Primera pregunta 1  Cuales son las dimensiones del dataset cargado (número de filas y columnas)
-dim(epa_http)
 
 #Primera pregunta  Valor medio de la columna Bytes
 mean(epa_http$bytes)
