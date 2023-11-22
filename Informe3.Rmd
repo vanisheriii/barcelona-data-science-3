@@ -6,12 +6,19 @@ output:
 date: "2023-11-22"
 ---
 
-\*\*Desarrollo de la práctica\*\* \
+# Actividad Evaluable 3
 
-------------------------------------------------------------------------
+## OBTENCIÓN Y CARGA DE LOS DATOS
 
-#  Se instala e importa las siguientes librerias
+Se requiere programar un script con el que podamos hacer una investigación forense sobre un fichero de logs de un servidor de tipo Apache. Los datos del registro del servidor están en el formato estándar e incluyen miles de registros sobre las distintas peticiones gestionadas por el servidor web.
 
+## Pregunta 1
+
+Descomprimir el fichero comprimido que contiene los registros del servidor, y a partir de los datos extraídos, cargar en data frame los registros con las peticiones servidas.
+
+**Respuesta**
+
+``` r
 install.packages("lubridate") install.packages("tidyverse") install.packages("stringr") install.packages("dplyr") install.packages("vetiver") install.packages("lubridate")
 
 if (!requireNamespace("writexl", quietly = TRUE)) { install.packages("writexl") }
@@ -19,90 +26,159 @@ if (!requireNamespace("writexl", quietly = TRUE)) { install.packages("writexl") 
 #Leer el archivo epa http.cvs library(readr) library(dplyr) library(stringr) library(lubridate) library(writexl)
 
 #Librerias kmeans library(mltools) library(data.table)
+```
 
-# OBTENCIÓN Y CARGA DE LOS DATOS
+```{r}
+library(tidyverse)  # data manipulation
+library(cluster)    # clustering algorithms
+library(factoextra) # clustering algorithms & visualization
 
-## Se requiere programar un script con el que podamos hacer una investigación forense sobre un fichero de logs de un servidor de tipo Apache. Los datos del registro del servidor están en el formato estándar e incluyen miles de registros sobre las distintas peticiones gestionadas por el servidor web.
+#Leer el archivo epa http.cvs
+library(readr)
+library(dplyr)
+library(stringr)
+library(lubridate)
+library(writexl)
+library(ggplot2)
 
-####################### PREGUNTA 1 - INICIO\
+#Librerias kmeans
+library(mltools)
+library(data.table)
 
-epa_http \<- read_table("epa-http.csv", col_names = FALSE)
+epa_http <- read_table("epa-http.csv", col_names = FALSE)
 
-# Cambiar el nombre de las columnas:
+#cambiar nombre de los columnas
+colnames(epa_http)[1]<-"origen"
+colnames(epa_http)[2]<-"dataTimeStamp"
+colnames(epa_http)[3]<-"metodoHttp"
+colnames(epa_http)[4]<-"uri"
+colnames(epa_http)[5]<-"protocolo"
+colnames(epa_http)[6]<-"respuestaHttp"
+colnames(epa_http)[7]<-"bytes"
+#Normalizar información de columnas:
+epa_http$metodoHttp <- gsub('^"|"$', '', epa_http$metodoHttp)
+epa_http$protocolo <- gsub('^"|"$', '', epa_http$protocolo)
+epa_http$dataTimeStamp <- as.POSIXct(epa_http$dataTimeStamp,format="[%d:%H:%M:%S]",tz = "utc")  
+epa_http$bytes <-  as.numeric(epa_http$bytes)
+epa_http$bytes <-  epa_http$bytes <- ifelse(is.na(epa_http$bytes), 0, epa_http$bytes)
+epa_http$origen <- str_trim(epa_http$origen)
+epa_http
 
-colnames(epa_http)[1]\<-"origen" colnames(epa_http)[2]\<-"dataTimeStamp" colnames(epa_http)[3]\<-"metodoHttp" colnames(epa_http)[4]\<-"uri" colnames(epa_http)[5]\<-"protocolo" colnames(epa_http)[6]\<-"respuestaHttp" colnames(epa_http)[7]\<-"bytes"
+```
 
-# Normalizar la información de columnas:
+## Pregunta 2
 
-epa_http$metodoHttp <- gsub('^"|"$','', epa_http$metodoHttp) epa_http$protocolo \<- gsub('\^"\|"$', '', epa_http$protocolo) epa_http$dataTimeStamp <- as.POSIXct(epa_http$dataTimeStamp,format="[%d:%H:%M:%S]",tz = "utc")\
-epa_http$bytes <- as.numeric(epa_http$bytes) epa_http$bytes <- epa_http$bytes \<- ifelse(is.na(epa_http$bytes), 0, epa_http$bytes) epa_http$origen <- str_trim(epa_http$origen) View(epa_http)
+**EXPLORACIÓN DE DATOS**
 
-# Validar si la columna es de tipo "Date"
+### ANÁLISIS DE DATOS
 
-if (all(is.Date(epa_http$dataTimeStamp))) { print("La columna dataTimeStamp es de tipo Date.") } else { print("La columna dataTimeStamp no es de tipo Date.") print(class(epa_http$dataTimeStamp)) }
+Identificar el número único de usuarios que han interactuado directamente con el servidor de forma segregada según si los usuarios han tenido algún tipo de error en las distintas peticiones ofrecidas por el servidor
 
-####################### PREGUNTA 1 - FIN\
+```{r}
+epa_http <- epa_http %>%
+  mutate(
+    exitoso = case_when(
+      stringr::str_detect(respuestaHttp, "^[123]") ~ TRUE,
+      TRUE ~ FALSE
+    )
+  )
 
-# EXPLORACIÓN DE DATOS
+p1_df <- epa_http %>% group_by(origen,exitoso) %>% summarise(peticiones  = n()) 
+p1_df
 
-## Identificar el número único de usuarios que han interactuado directamente con el servidor de forma segregada según si los usuarios han tenido algún tipo de error en las distintas peticiones ofrecidas por el servidor.
+```
 
-####################### PREGUNTA 2 - INICIO\
+## Pregunta 3
 
-## NORMALIZANDO la información de HREF, convirtiendo una URL "Relativa" a "Absoluta" (tipo2)
+Analizar los distintos tipos de peticiones HTTP (GET, POST, PUT, DELETE) gestionadas por el servidor, identificando la frecuencia de cada una de estas. Repetir el análisis, esta vez filtrando previamente aquellas peticiones correspondientes a recursos ofrecidos de tipo imagen.
 
-epa_http \<- epa_http %\>% mutate( exitoso = case_when( stringr::str_detect(respuestaHttp, "[^1]") \~ TRUE, TRUE \~ FALSE ) )
+```{r}
 
-[^1]: 123
+epa_http <- epa_http %>%
+  mutate(
+    is_image = case_when(
+      stringr::str_detect(uri, "(?i)\\.(jpg|jpeg|png|xbm|svg|gif|tiff|psd|bmp|eps|ps)$") ~ TRUE,
+      TRUE ~ FALSE
+    )
+  )
+p2_df <- epa_http %>% group_by(metodoHttp,is_image) %>% summarise(peticiones  = n()) 
+p2_df
+```
 
-p1_df \<- epa_http %\>% group_by(origen,exitoso) %\>% summarise(peticiones = n()) View(p1_df)
+## Pregunta 4
 
-####################### PREGUNTA 2 - FIN\
+Generar al menos 2 gráficos distintos que permitan visualizar alguna 
+característica relevante de los datos analizados. Estos deberán representar por 
+lo menos 1 o 2 variables diferentes del data frame. Describid el gráfico e indicad 
+cualquier observación destacable que se pueda apreciar gracias a la 
+representación gráfica.
+**Respuesta**
 
-# ANÁLISIS DE DATOS
 
-## Analizar los distintos tipos de peticiones HTTP (GET, POST, PUT, DELETE) gestionadas por el servidor, identificando la frecuencia de cada una de estas. Repetir el análisis, esta vez filtrando previamente aquellas peticiones correspondientes a recursos ofrecidos de tipo imagen.
+## Pregunta 5
 
-####################### PREGUNTA 3 - INICIO\
+Generar un gráfico que permita visualizar el número de peticiones servidas a 
+lo largo del tiempo.
+**Respuesta**
 
-# Filtrar y agregar a una columna nueva si es archivo de imagen
 
-epa_http \<- epa_http %\>% mutate( is_image = case_when( stringr::str_detect(uri, "(?i)\\.(jpg\|jpeg\|png\|xbm\|svg\|gif\|tiff\|psd\|bmp\|eps\|ps)\$") \~ TRUE, TRUE \~ FALSE ) ) p2_df \<- epa_http %\>% group_by(metodoHttp,is_image) %\>% summarise(peticiones = n())
+## Pregunta 6
 
-write_xlsx(epa_http, "epa_http_data.xlsx")
+Utilizando un algoritmo de aprendizaje no supervisado, realizad un análisis de clústering con k-means para los datos del servidor.
 
-####################### PREGUNTA 3 - FIN\
+```{r}
+epa_http$exitoso <-factor(epa_http$exitoso)
+epa_http$is_image <-factor(epa_http$is_image)
+epa_http$metodoHttp<- factor(epa_http$metodoHttp)
+epa_http$protocolo<- factor(epa_http$protocolo)
 
-# VISUALIZACIÓN DE LOS RESULTADOS
+epa_http$num_letras <- nchar(epa_http$uri)
+epa_http$num_letras <- NULL
 
-## Generar al menos 2 gráficos distintos que permitan visualizar alguna característica relevante de los datos analizados. Estos deberán representar por lo menos 1 o 2 variables diferentes del data frame. Describid el gráfico e indicar cualquier observación destacable que se pueda apreciar gracias a la representación gráfica.
 
-####################### PREGUNTA 4 - INICIO\
+epa_http_one_hot <- one_hot(as.data.table(epa_http), sparsifyNAs = TRUE)
 
-####################### PREGUNTA 4 - FIN\
 
-# VISUALIZACIÓN DE LOS RESULTADOS
+columnas_a_mantener <- c("metodoHttp", "protocolo", "respuestaHttp","bytes","exitoso","is_image")
+epa_http_new <- epa_http[, columnas_a_mantener, drop = FALSE]
 
-## Generar un gráfico que permita visualizar el número de peticiones servidas a lo largo del tiempo.
+epa_http_one_hot <- one_hot(as.data.table(epa_http_new), sparsifyNAs = TRUE)
 
-####################### PREGUNTA 5 - INICIO\
+names(epa_http_one_hot)
 
-####################### PREGUNTA 5 - FIN\
+set.seed(1234)
+kmeans1 <- kmeans(epa_http_one_hot, 3, iter.max = 100, nstart = 1)
+kmeans2 <- kmeans(epa_http_one_hot, 7, iter.max = 100, nstart = 1)
+#printing
+kmeans1
+kmeans2
+```
 
-# VISUALIZACIÓN DE LOS RESULTADOS
+## Pregunta 7
 
-## Utilizando un algoritmo de aprendizaje no supervisado, realizad un análisis de clústering con k-means para los datos del servidor.
+Representad visualmente en gráficos de tipo scatter plot el resultado de vuestros clústering y interpretad el resultado obtenido (describid las características de los distintos grupos) con los 2 valores distintos de k probados en el apartado anterior en función de los valores de las variables y el número de clúster asignado.
 
-####################### PREGUNTA 6 - INICIO\
+```{r}
 
-####################### PREGUNTA 6 - FIN\
+fviz_cluster(kmeans1, data = epa_http_one_hot,ggtheme = theme_minimal(),show.clust.cent = TRUE,
+            main = "Pregunta KMeans",
+             ellipse = TRUE,
+             #axes = c(6, 10),
+             axes = c(1, 2),
+             ellipse.type = "convex",
+             ellipse.level = 0.95,
+             ellipse.alpha = 0.2)
 
-# VISUALIZACIÓN DE LOS RESULTADOS
 
-## Representar visualmente en gráficos de tipo scatter plot el resultado de vuestros clústering y interpretad el resultado obtenido.
+fviz_cluster(kmeans2, data = epa_http_one_hot,ggtheme = theme_minimal(),show.clust.cent = TRUE,
+             main = "Pregunta KMeans",
+             ellipse = TRUE,
+             #axes = c(6, 10),
+             axes = c(1, 2),
+             ellipse.type = "convex",
+             ellipse.level = 0.95,
+             ellipse.alpha = 0.2)
 
-####################### PREGUNTA 7 - INICIO  
 
-####################### PREGUNTA 7 - FIN  
 
-# \< FIN DE LA PRÁCTICA \>
+```
