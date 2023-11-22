@@ -5,11 +5,16 @@ install.packages("stringr")
 install.packages("dplyr")
 install.packages("vetiver")
 install.packages("lubridate")
+#install.packages("factoextra")
 
 if (!requireNamespace("writexl", quietly = TRUE)) {
   install.packages("writexl")
 }
 
+
+library(tidyverse)  # data manipulation
+library(cluster)    # clustering algorithms
+library(factoextra) # clustering algorithms & visualization
 
 #Leer el archivo epa http.cvs
 library(readr)
@@ -17,6 +22,7 @@ library(dplyr)
 library(stringr)
 library(lubridate)
 library(writexl)
+library(ggplot2)
 
 #Librerias kmeans
 library(mltools)
@@ -28,6 +34,7 @@ library(data.table)
 ####################### PREGUNTA 1 INICIO #######################
 
 epa_http <- read_table("epa-http.csv", col_names = FALSE)
+
 #cambiar nombre de los columnas
 colnames(epa_http)[1]<-"origen"
 colnames(epa_http)[2]<-"dataTimeStamp"
@@ -102,10 +109,27 @@ epa_http$is_image <-factor(epa_http$is_image)
 epa_http$metodoHttp<- factor(epa_http$metodoHttp)
 epa_http$protocolo<- factor(epa_http$protocolo)
 
+epa_http$num_letras <- nchar(epa_http$uri)
+epa_http$num_letras <- NULL
+
+
 epa_http_one_hot <- one_hot(epa_http, sparsifyNAs = TRUE)
 epa_http_one_hot <- one_hot(as.data.table(epa_http), sparsifyNAs = TRUE)
 
 
+columnas_a_mantener <- c("metodoHttp", "protocolo", "respuestaHttp","bytes","exitoso","is_image")
+epa_http_new <- epa_http[, columnas_a_mantener, drop = FALSE]
+
+epa_http_one_hot <- one_hot(as.data.table(epa_http_new), sparsifyNAs = TRUE)
+
+names(epa_http_one_hot)
 
 set.seed(1234)
-kmeans <- kmeans(epa_http, 4, iter.max = 1000, nstart = 10)
+kmeans <- kmeans(epa_http_one_hot, 2, iter.max = 10000, nstart = 1)
+
+fviz_cluster(kmeans, data = epa_http_one_hot,geom = c("point","text"),
+             ellipse = TRUE,
+             ellipse.type = "convex",
+             ellipse.level = 0.95,
+             ellipse.alpha = 0.2)
+
