@@ -47,11 +47,7 @@ if (all(is.Date(epa_http$dataTimeStamp))) {
 epa_http <- epa_http %>%
   mutate(
     exitoso = case_when(
-      as.numeric(respuestaHttp) == 200 ~ TRUE,
-      as.numeric(respuestaHttp) == 302 ~ TRUE,
-      as.numeric(respuestaHttp) == 304 ~ TRUE,
-      as.numeric(respuestaHttp) == 403 ~ FALSE,
-      as.numeric(respuestaHttp) == 403 ~ FALSE,
+      stringr::str_detect(respuestaHttp, "^[123]") ~ TRUE,
       TRUE ~ FALSE
     )
   )
