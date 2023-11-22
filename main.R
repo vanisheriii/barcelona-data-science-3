@@ -52,7 +52,8 @@ epa_http <- epa_http %>%
     )
   )
 
-
+p1_df <- epa_http %>% group_by(origen,exitoso) %>% summarise(peticiones  = n()) 
+View(p1_df)
 #Primera pregunta  Valor medio de la columna Bytes
 mean(epa_http$bytes)
 
