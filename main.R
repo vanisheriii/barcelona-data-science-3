@@ -3,7 +3,9 @@ install.packages("lubridate")
 install.packages("tidyverse")
 install.packages("stringr")
 install.packages("dplyr")
+install.packages("vetiver")
 install.packages("lubridate")
+
 if (!requireNamespace("writexl", quietly = TRUE)) {
   install.packages("writexl")
 }
@@ -19,6 +21,7 @@ library(writexl)
 #Librerias kmeans
 library(mltools)
 library(data.table)
+
 
 
 
@@ -74,7 +77,7 @@ View(p1_df)
 epa_http <- epa_http %>%
   mutate(
     is_image = case_when(
-      stringr::str_detect(uri, "(?i)\\.(jpg|jpeg|png|xbm|svg|gif|tiff|psd|bmp|eps)$") ~ TRUE,
+      stringr::str_detect(uri, "(?i)\\.(jpg|jpeg|png|xbm|svg|gif|tiff|psd|bmp|eps|ps)$") ~ TRUE,
       TRUE ~ FALSE
     )
   )
@@ -91,3 +94,7 @@ write_xlsx(epa_http, "epa_http_data.xlsx")
 
 ####################### PREGUNTA 4 FIN #######################
 
+
+####################### PREGUNTA CLUSTERING INICIO 6 #######################
+
+epa_http_one_hot <- one_hot(as.data.table(epa_http), sparsifyNAs = TRUE)
