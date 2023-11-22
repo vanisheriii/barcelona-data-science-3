@@ -41,7 +41,6 @@ if (all(is.Date(epa_http$dataTimeStamp))) {
 
 ####################### PREGUNTA 1 FIN #######################
 
-####################### PREGUNTA 2 FIN #######################
 
 ## NORMALIZANDO la informaciòn de HREF, convirtiendo una URL Relativa a absoluta (tipo2)
 epa_http <- epa_http %>%
@@ -54,6 +53,8 @@ epa_http <- epa_http %>%
 
 p1_df <- epa_http %>% group_by(origen,exitoso) %>% summarise(peticiones  = n()) 
 View(p1_df)
+####################### PREGUNTA 2 FIN #######################
+
 #Primera pregunta  Valor medio de la columna Bytes
 mean(epa_http$bytes)
 
