@@ -60,7 +60,13 @@ View(p1_df)
 
 #Filtrar y agregar a una columna nueva si es archivo de imagen
 
-
+epa_http <- epa_http %>%
+  mutate(
+    is_image = case_when(
+      stringr::str_detect(uri, "$\.[jpg|jpeg|png|svg|gif|tiff|psd|bmp|eps]") ~ TRUE,
+      TRUE ~ FALSE
+    )
+  )
 
 ####################### PREGUNTA 3 FIN #######################
 
