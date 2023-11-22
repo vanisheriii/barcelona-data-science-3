@@ -97,4 +97,15 @@ write_xlsx(epa_http, "epa_http_data.xlsx")
 
 ####################### PREGUNTA CLUSTERING INICIO 6 #######################
 
+epa_http$exitoso <-factor(epa_http$exitoso)
+epa_http$is_image <-factor(epa_http$is_image)
+epa_http$metodoHttp<- factor(epa_http$metodoHttp)
+epa_http$protocolo<- factor(epa_http$protocolo)
+
+epa_http_one_hot <- one_hot(epa_http, sparsifyNAs = TRUE)
 epa_http_one_hot <- one_hot(as.data.table(epa_http), sparsifyNAs = TRUE)
+
+
+
+set.seed(1234)
+kmeans <- kmeans(epa_http, 4, iter.max = 1000, nstart = 10)
