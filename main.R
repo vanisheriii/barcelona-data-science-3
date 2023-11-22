@@ -41,6 +41,22 @@ if (all(is.Date(epa_http$dataTimeStamp))) {
 
 ####################### PREGUNTA 1 FIN #######################
 
+####################### PREGUNTA 2 FIN #######################
+
+## NORMALIZANDO la informaciòn de HREF, convirtiendo una URL Relativa a absoluta (tipo2)
+epa_http <- epa_http %>%
+  mutate(
+    exitoso = case_when(
+      as.numeric(respuestaHttp) == 200 ~ TRUE,
+      as.numeric(respuestaHttp) == 302 ~ TRUE,
+      as.numeric(respuestaHttp) == 304 ~ TRUE,
+      as.numeric(respuestaHttp) == 403 ~ FALSE,
+      as.numeric(respuestaHttp) == 403 ~ FALSE,
+      TRUE ~ FALSE
+    )
+  )
+
+
 #Primera pregunta  Valor medio de la columna Bytes
 mean(epa_http$bytes)
 
