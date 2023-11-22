@@ -3,11 +3,13 @@ install.packages("lubridate")
 install.packages("tidyverse")
 install.packages("stringr")
 install.packages("dplyr")
+install.packages("lubridate")
 
 #Leer el archivo epa http.cvs
 library(readr)
 library(dplyr)
 library(stringr)
+library(lubridate)
 
 
 epa_http <- read_table("epa-http.csv", col_names = FALSE)
@@ -28,6 +30,14 @@ epa_http$bytes <-  epa_http$bytes <- ifelse(is.na(epa_http$bytes), 0, epa_http$b
 epa_http$origen <- str_trim(epa_http$origen)
 View(epa_http)
 
+
+# Validar si la columna es de tipo Date
+if (all(is.Date(epa_http$dataTimeStamp))) {
+  print("La columna dataTimeStamp es de tipo Date.")
+} else {
+  print("La columna dataTimeStamp no es de tipo Date.")
+  print(class(epa_http$dataTimeStamp))
+}
 
 
 #Primera pregunta  Valor medio de la columna Bytes
